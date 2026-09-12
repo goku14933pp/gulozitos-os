@@ -45,7 +45,6 @@ def index():
             driver = iniciar_driver()
             driver.get("https://tarefasp.cmsp.seduc.sp.gov.br/")
             time.sleep(3)
-            # Automatização conforme fluxo do CMSP
             driver.find_element(By.ID, "input-usuario-sed").send_keys(ra)
             driver.find_element(By.ID, "r2").send_keys(digito)
             driver.find_element(By.ID, "input-senha").send_keys(senha)
@@ -64,12 +63,16 @@ def index():
     <html lang="pt-br">
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Gulozitos OS</title>
         <style>
+            * {
+                box-sizing: border-box;
+            }
             body {
                 margin: 0;
                 padding: 0;
-                background-color: #050302;
+                background-color: #000;
                 font-family: Arial, sans-serif;
                 display: flex;
                 justify-content: center;
@@ -77,121 +80,137 @@ def index():
                 min-height: 100vh;
                 overflow: hidden;
             }
+            
             .wrapper {
                 position: relative;
-                width: 100%;
-                max-width: 410px;
+                width: 100vw;
                 height: 100vh;
-                max-height: 820px;
+                max-width: 480px;
+                max-height: 920px;
                 display: flex;
                 justify-content: center;
                 align-items: center;
             }
+
             .bg-image {
                 position: absolute;
                 width: 100%;
                 height: 100%;
-                object-fit: contain;
+                object-fit: cover;
                 z-index: 1;
-                pointer-events: none; /* Garante que os cliques passem direto para os inputs se necessário */
+                pointer-events: none;
             }
-            /* Camada interativa posicionada milimetricamente sobre a arte */
+
+            /* Área de inputs aumentada e proporcional ao pacote */
             .form-overlay {
-                position: relative;
+                position: absolute;
                 z-index: 10;
-                width: 63%;
+                width: 72%; /* Aumentado para preencher melhor a largura útil */
+                top: 46%;
+                transform: translateY(-50%);
                 display: flex;
                 flex-direction: column;
-                gap: 7px;
-                margin-top: 12px;
+                gap: 12px;
             }
+
             .row-inputs {
                 display: flex;
-                gap: 5px;
+                gap: 8px;
             }
+
             .input-box {
-                background: rgba(8, 3, 2, 0.92);
-                border: 1px solid rgba(255, 69, 0, 0.75);
-                border-radius: 5px;
-                padding: 7px 9px;
+                background: rgba(12, 5, 3, 0.93);
+                border: 1.5px solid rgba(255, 90, 0, 0.8);
+                border-radius: 6px;
+                padding: 12px 14px; /* Mais espaçamento interno (maior) */
                 display: flex;
                 align-items: center;
-                box-shadow: inset 0 2px 4px rgba(0,0,0,0.9);
+                box-shadow: inset 0 2px 5px rgba(0,0,0,0.85);
             }
+
             .input-box select,
             .input-box input {
                 background: transparent;
                 border: none;
                 color: #fff;
-                font-size: 13px;
+                font-size: 16px; /* Fonte maior para facilitar a leitura e digitação */
                 width: 100%;
                 outline: none;
             }
+
             .input-box select option {
                 background: #111;
                 color: #fff;
             }
+
             .input-box input::placeholder {
                 color: #8c7e77;
             }
+
             .estado-group { flex: 1.2; }
             .ra-group { flex: 2.2; }
             .digito-group { flex: 1; }
+
             .pass-container {
                 position: relative;
                 display: flex;
                 align-items: center;
+                width: 100%;
             }
+
             .toggle-pass {
                 position: absolute;
-                right: 10px;
+                right: 14px;
                 background: none;
                 border: none;
                 color: #ff5500;
                 cursor: pointer;
-                font-size: 12px;
+                font-size: 18px; /* Botão de olho maior */
                 font-weight: bold;
             }
+
             .btn-acessar {
                 width: 100%;
-                background: linear-gradient(to bottom, #ff5500 0%, #e62200 100%);
+                background: linear-gradient(to bottom, #ff5500 0%, #d61c00 100%);
                 color: #fff;
-                border: 1px solid #ff7733;
-                padding: 9px;
-                font-size: 13px;
+                border: 1.5px solid #ff7733;
+                padding: 14px; /* Botão mais robusto e fácil de clicar */
+                font-size: 16px;
                 font-weight: bold;
-                border-radius: 5px;
+                border-radius: 6px;
                 cursor: pointer;
                 text-transform: uppercase;
-                letter-spacing: 0.5px;
-                box-shadow: 0 4px 10px rgba(255, 68, 0, 0.6);
+                letter-spacing: 1px;
+                box-shadow: 0 4px 12px rgba(255, 68, 0, 0.7);
             }
-            .btn-acessar:hover {
-                background: linear-gradient(to bottom, #ff661a, #f5330a);
+
+            .btn-acessار:hover {
+                background: linear-gradient(to bottom, #ff661a, #e62200);
             }
+
             .terminal-box {
                 background: rgba(2, 6, 2, 0.95);
-                border: 1px solid #166534;
-                border-radius: 5px;
-                padding: 7px;
+                border: 1.5px solid #166534;
+                border-radius: 6px;
+                padding: 10px;
                 font-family: 'Courier New', Courier, monospace;
                 color: #4ade80;
-                font-size: 9.5px;
-                line-height: 1.3;
-                max-height: 55px;
+                font-size: 12px; /* Letras do terminal maiores */
+                line-height: 1.4;
+                max-height: 85px;
                 overflow-y: auto;
+                box-shadow: inset 0 0 10px rgba(0,0,0,0.9);
+                margin-top: 6px;
             }
         </style>
     </head>
     <body>
         <div class="wrapper">
-            <!-- Imagem exata de fundo -->
-            <img src="https://i.ibb.co/6803719/gulozitos-bg.png" class="bg-image" alt="Gulozitos OS">
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0tKEAAA..." class="bg-image" alt="Gulozitos OS">
 
             <div class="form-overlay">
                 <form method="POST">
-                    <!-- Linha 1: Estado, RA e Dígito sobrepostos exatamente onde a arte pede -->
-                    <div class="row-inputs" style="margin-bottom: 7px;">
+                    <div class="row-inputs" style="margin-bottom: 10px;">
                         <div class="input-box estado-group">
                             <select name="estado">
                                 <option value="SP">SP</option>
@@ -206,17 +225,14 @@ def index():
                         </div>
                     </div>
 
-                    <!-- Linha 2: Senha com botão funcional de ver/ocultar integrado -->
-                    <div class="input-box pass-container" style="margin-bottom: 7px; width: 100%;">
+                    <div class="input-box pass-container" style="margin-bottom: 12px;">
                         <input type="password" name="senha" id="senha" placeholder="Senha" required style="padding-right: 35px;">
                         <button type="button" class="toggle-pass" onclick="toggleSenha()">👁</button>
                     </div>
 
-                    <!-- Botão de Acessar -->
                     <button type="submit" class="btn-acessar">ACESSAR</button>
                 </form>
 
-                <!-- Terminal simulado igualzinho na foto -->
                 <div class="terminal-box">
                     {{ logs_html | safe }}
                 </div>
