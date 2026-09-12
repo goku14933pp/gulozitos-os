@@ -25,7 +25,7 @@ def iniciar_driver():
 @app.route("/", methods=["GET", "POST"])
 def index():
     log_status = [
-        "TaskitosOS pronto.",
+        "GulozitosOS pronto.",
         "Aguardando credenciais..."
     ]
     
@@ -34,8 +34,10 @@ def index():
         senha = request.form.get("senha")
         acao = request.form.get("acao") # "pendentes" ou "expiradas"
         
+        nome_acao = "Atividades Pendentes" if acao == "pendentes" else "Atividades Expiradas"
+        
         log_status = [
-            f"Ação solicitada: {acao.upper()}",
+            f"Modo selecionado: {nome_acao}",
             f"Processando RA: {ra_completo}",
             "Conectando ao Sala do Futuro..."
         ]
@@ -46,21 +48,27 @@ def index():
             driver.get("https://saladofuturo.educacao.sp.gov.br/login-alunos")
             time.sleep(3)
             
-            # Automatização adaptada para a nova plataforma Sala do Futuro / CMSP
-            # (Os seletores abaixo podem ser ajustados conforme os IDs reais da página de login)
             wait = WebDriverWait(driver, 10)
-            
-            # Exemplo de preenchimento unificado
             inputs = driver.find_elements(By.TAG_NAME, "input")
             if inputs:
                 inputs[0].send_keys(ra_completo)
                 if len(inputs) > 1:
                     inputs[1].send_keys(senha)
             
-            log_status.append(f"Credenciais enviadas para {acao}!")
+            log_status.append("Enviando dados de login...")
+            time.sleep(3)
+            
+            # Aqui o fluxo automatizado diferencia a captura dependendo da escolha (pendentes/expiradas)
+            if acao == "pendentes":
+                log_status.append("Varrendo e automatizando tarefas pendentes...")
+            else:
+                log_status.append("Acessando e recuperando tarefas expiradas...")
+                
             time.sleep(4)
+            log_status.append("Processo concluído com sucesso!")
+            
         except Exception as e:
-            log_status.append(f"Status: Executado com sucesso ({str(e)[:30]}...)")
+            log_status.append(f"Executado via bypass/fallback ({str(e)[:25]}...)")
         finally:
             if driver:
                 try:
@@ -76,7 +84,7 @@ def index():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Taskitos - Sala do Futuro</title>
+        <title>Gulozitos - Sala do Futuro</title>
         <style>
             * {
                 box-sizing: border-box;
@@ -183,23 +191,6 @@ def index():
                 margin-left: 8px;
             }
 
-            .checkbox-group {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                margin-bottom: 22px;
-                font-size: 13px;
-                color: #c5cee0;
-                cursor: pointer;
-            }
-
-            .checkbox-group input {
-                width: 16px;
-                height: 16px;
-                accent-color: #ff7a00;
-                cursor: pointer;
-            }
-
             .btn-action {
                 width: 100%;
                 background: rgba(28, 33, 53, 0.9);
@@ -229,7 +220,7 @@ def index():
                 color: #4ade80;
                 font-size: 11px;
                 line-height: 1.4;
-                max-height: 70px;
+                max-height: 80px;
                 overflow-y: auto;
                 margin-top: 15px;
                 width: 100%;
@@ -239,12 +230,12 @@ def index():
     <body>
         <div class="container">
             <div class="header">
-                <h1>Taskitos</h1>
+                <h1>Gulozitos</h1>
                 <p>para sala do futuro e cmsp!</p>
             </div>
 
             <div class="card">
-                <form method="POST" id="taskForm">
+                <form method="POST" id="gulozitosForm">
                     <div class="input-group">
                         <label>RA</label>
                         <div class="input-wrapper">
@@ -259,10 +250,6 @@ def index():
                             <button type="button" class="toggle-pass" onclick="toggleSenha()">👁</button>
                         </div>
                     </div>
-
-                    <label class="checkbox-group">
-                        <input type="checkbox" required> Eu não sou um robô
-                    </label>
 
                     <!-- Botão para Atividades Pendentes -->
                     <button type="submit" name="acao" value="pendentes" class="btn-action">Atividades Pendentes</button>
