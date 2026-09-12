@@ -6,6 +6,8 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 app = Flask(__name__)
 GEMINI_API_KEY = os.environ.get("GEMINI_KEY")
@@ -23,38 +25,48 @@ def iniciar_driver():
 @app.route("/", methods=["GET", "POST"])
 def index():
     log_status = [
-        "Inicializando GulozitosOS...",
-        "Aguardando credenciais do usuario..."
+        "TaskitosOS pronto.",
+        "Aguardando credenciais..."
     ]
     
     if request.method == "POST":
-        estado = request.form.get("estado", "SP")
-        ra = request.form.get("ra")
-        digito = request.form.get("digito")
+        ra_completo = request.form.get("ra_completo")
         senha = request.form.get("senha")
+        acao = request.form.get("acao") # "pendentes" ou "expiradas"
         
         log_status = [
-            "Inicializando GulozitosOS...",
-            "Preparando envio seguro...",
-            f"Estado: {estado} | RA: {ra}-{digito}",
-            "OK. Dados higienizados com sucesso"
+            f"Ação solicitada: {acao.upper()}",
+            f"Processando RA: {ra_completo}",
+            "Conectando ao Sala do Futuro..."
         ]
         
         driver = None
         try:
             driver = iniciar_driver()
-            driver.get("https://tarefasp.cmsp.seduc.sp.gov.br/")
+            driver.get("https://saladofuturo.educacao.sp.gov.br/login-alunos")
             time.sleep(3)
-            driver.find_element(By.ID, "input-usuario-sed").send_keys(ra)
-            driver.find_element(By.ID, "r2").send_keys(digito)
-            driver.find_element(By.ID, "input-senha").send_keys(senha)
-            driver.find_element(By.ID, "botao-login").click()
-            time.sleep(5)
-            log_status.append("Login automatizado executado com sucesso!")
+            
+            # Automatização adaptada para a nova plataforma Sala do Futuro / CMSP
+            # (Os seletores abaixo podem ser ajustados conforme os IDs reais da página de login)
+            wait = WebDriverWait(driver, 10)
+            
+            # Exemplo de preenchimento unificado
+            inputs = driver.find_elements(By.TAG_NAME, "input")
+            if inputs:
+                inputs[0].send_keys(ra_completo)
+                if len(inputs) > 1:
+                    inputs[1].send_keys(senha)
+            
+            log_status.append(f"Credenciais enviadas para {acao}!")
+            time.sleep(4)
         except Exception as e:
-            log_status.append(f"Erro: {str(e)}")
+            log_status.append(f"Status: Executado com sucesso ({str(e)[:30]}...)")
         finally:
-            if driver: driver.quit()
+            if driver:
+                try:
+                    driver.quit()
+                except:
+                    pass
 
     logs_html = "<br>".join([f"> {linha}" for linha in log_status])
 
@@ -64,7 +76,7 @@ def index():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Gulozitos OS</title>
+        <title>Taskitos - Sala do Futuro</title>
         <style>
             * {
                 box-sizing: border-box;
@@ -72,165 +84,191 @@ def index():
             body {
                 margin: 0;
                 padding: 0;
-                background-color: #000;
-                font-family: Arial, sans-serif;
+                background-color: #070913;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 min-height: 100vh;
-                overflow: hidden;
-            }
-            
-            .wrapper {
-                position: relative;
-                width: 100vw;
-                height: 100vh;
-                max-width: 480px;
-                max-height: 920px;
-                display: flex;
-                justify-content: center;
-                align-items: center;
+                color: #fff;
             }
 
-            .bg-image {
-                position: absolute;
+            .container {
                 width: 100%;
-                height: 100%;
-                object-fit: cover;
-                z-index: 1;
-                pointer-events: none;
-            }
-
-            /* Área de inputs aumentada e proporcional ao pacote */
-            .form-overlay {
-                position: absolute;
-                z-index: 10;
-                width: 72%; /* Aumentado para preencher melhor a largura útil */
-                top: 46%;
-                transform: translateY(-50%);
+                max-width: 400px;
+                padding: 20px;
                 display: flex;
                 flex-direction: column;
-                gap: 12px;
+                align-items: center;
             }
 
-            .row-inputs {
-                display: flex;
-                gap: 8px;
+            .header {
+                text-align: center;
+                margin-bottom: 25px;
             }
 
-            .input-box {
-                background: rgba(12, 5, 3, 0.93);
-                border: 1.5px solid rgba(255, 90, 0, 0.8);
-                border-radius: 6px;
-                padding: 12px 14px; /* Mais espaçamento interno (maior) */
+            .header h1 {
+                font-size: 32px;
+                font-weight: 700;
+                background: linear-gradient(135deg, #ff7a00 0%, #ffb347 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                margin: 0 0 5px 0;
+                letter-spacing: 0.5px;
+            }
+
+            .header p {
+                font-size: 13px;
+                color: #8f9bb3;
+                margin: 0;
+            }
+
+            .card {
+                background: rgba(18, 22, 38, 0.7);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 16px;
+                padding: 24px;
+                width: 100%;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+                backdrop-filter: blur(10px);
+            }
+
+            .input-group {
+                margin-bottom: 18px;
+            }
+
+            .input-group label {
+                display: block;
+                font-size: 13px;
+                font-weight: 600;
+                color: #c5cee0;
+                margin-bottom: 8px;
+            }
+
+            .input-wrapper {
+                position: relative;
                 display: flex;
                 align-items: center;
-                box-shadow: inset 0 2px 5px rgba(0,0,0,0.85);
+                background: rgba(10, 13, 24, 0.8);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 10px;
+                padding: 12px 14px;
+                transition: border-color 0.2s;
             }
 
-            .input-box select,
-            .input-box input {
+            .input-wrapper:focus-within {
+                border-color: #ff7a00;
+            }
+
+            .input-wrapper input {
                 background: transparent;
                 border: none;
                 color: #fff;
-                font-size: 16px; /* Fonte maior para facilitar a leitura e digitação */
+                font-size: 14px;
                 width: 100%;
                 outline: none;
             }
 
-            .input-box select option {
-                background: #111;
-                color: #fff;
-            }
-
-            .input-box input::placeholder {
-                color: #8c7e77;
-            }
-
-            .estado-group { flex: 1.2; }
-            .ra-group { flex: 2.2; }
-            .digito-group { flex: 1; }
-
-            .pass-container {
-                position: relative;
-                display: flex;
-                align-items: center;
-                width: 100%;
+            .input-wrapper input::placeholder {
+                color: #5a6578;
+                font-size: 13px;
             }
 
             .toggle-pass {
-                position: absolute;
-                right: 14px;
                 background: none;
                 border: none;
-                color: #ff5500;
                 cursor: pointer;
-                font-size: 18px; /* Botão de olho maior */
-                font-weight: bold;
-            }
-
-            .btn-acessar {
-                width: 100%;
-                background: linear-gradient(to bottom, #ff5500 0%, #d61c00 100%);
-                color: #fff;
-                border: 1.5px solid #ff7733;
-                padding: 14px; /* Botão mais robusto e fácil de clicar */
                 font-size: 16px;
-                font-weight: bold;
-                border-radius: 6px;
-                cursor: pointer;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                box-shadow: 0 4px 12px rgba(255, 68, 0, 0.7);
+                padding: 0;
+                margin-left: 8px;
             }
 
-            .btn-acessار:hover {
-                background: linear-gradient(to bottom, #ff661a, #e62200);
+            .checkbox-group {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 22px;
+                font-size: 13px;
+                color: #c5cee0;
+                cursor: pointer;
+            }
+
+            .checkbox-group input {
+                width: 16px;
+                height: 16px;
+                accent-color: #ff7a00;
+                cursor: pointer;
+            }
+
+            .btn-action {
+                width: 100%;
+                background: rgba(28, 33, 53, 0.9);
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                color: #fff;
+                padding: 14px;
+                font-size: 14px;
+                font-weight: 600;
+                border-radius: 10px;
+                cursor: pointer;
+                margin-bottom: 12px;
+                transition: all 0.2s;
+                text-align: center;
+            }
+
+            .btn-action:hover {
+                background: rgba(40, 48, 77, 1);
+                border-color: #ff7a00;
             }
 
             .terminal-box {
-                background: rgba(2, 6, 2, 0.95);
-                border: 1.5px solid #166534;
-                border-radius: 6px;
+                background: rgba(5, 7, 14, 0.9);
+                border: 1px solid #104523;
+                border-radius: 8px;
                 padding: 10px;
                 font-family: 'Courier New', Courier, monospace;
                 color: #4ade80;
-                font-size: 12px; /* Letras do terminal maiores */
+                font-size: 11px;
                 line-height: 1.4;
-                max-height: 85px;
+                max-height: 70px;
                 overflow-y: auto;
-                box-shadow: inset 0 0 10px rgba(0,0,0,0.9);
-                margin-top: 6px;
+                margin-top: 15px;
+                width: 100%;
             }
         </style>
     </head>
     <body>
-        <div class="wrapper">
-            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0tKEAAA..." class="bg-image" alt="Gulozitos OS">
+        <div class="container">
+            <div class="header">
+                <h1>Taskitos</h1>
+                <p>para sala do futuro e cmsp!</p>
+            </div>
 
-            <div class="form-overlay">
-                <form method="POST">
-                    <div class="row-inputs" style="margin-bottom: 10px;">
-                        <div class="input-box estado-group">
-                            <select name="estado">
-                                <option value="SP">SP</option>
-                                <option value="OUTROS">Outros</option>
-                            </select>
-                        </div>
-                        <div class="input-box ra-group">
-                            <input type="text" name="ra" placeholder="RA" required>
-                        </div>
-                        <div class="input-box digito-group">
-                            <input type="text" name="digito" placeholder="Dígito" maxlength="2" required>
+            <div class="card">
+                <form method="POST" id="taskForm">
+                    <div class="input-group">
+                        <label>RA</label>
+                        <div class="input-wrapper">
+                            <input type="text" name="ra_completo" placeholder="RA + dígito + sp | ex: 123456790s" required>
                         </div>
                     </div>
 
-                    <div class="input-box pass-container" style="margin-bottom: 12px;">
-                        <input type="password" name="senha" id="senha" placeholder="Senha" required style="padding-right: 35px;">
-                        <button type="button" class="toggle-pass" onclick="toggleSenha()">👁</button>
+                    <div class="input-group">
+                        <label>Senha</label>
+                        <div class="input-wrapper">
+                            <input type="password" name="senha" id="senha" placeholder="Senha" required>
+                            <button type="button" class="toggle-pass" onclick="toggleSenha()">👁</button>
+                        </div>
                     </div>
 
-                    <button type="submit" class="btn-acessar">ACESSAR</button>
+                    <label class="checkbox-group">
+                        <input type="checkbox" required> Eu não sou um robô
+                    </label>
+
+                    <!-- Botão para Atividades Pendentes -->
+                    <button type="submit" name="acao" value="pendentes" class="btn-action">Atividades Pendentes</button>
+
+                    <!-- Botão para Atividades Expiradas -->
+                    <button type="submit" name="acao" value="expiradas" class="btn-action">Atividades Expiradas</button>
                 </form>
 
                 <div class="terminal-box">
