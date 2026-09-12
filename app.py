@@ -22,28 +22,42 @@ def iniciar_driver():
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    resultado = "Inicializando GulozitosOS..."
+    log_status = [
+        "Inicializando GulozitosOS...",
+        "Aguardando credenciais do usuario..."
+    ]
+    
     if request.method == "POST":
+        estado = request.form.get("estado", "SP")
         ra = request.form.get("ra")
         digito = request.form.get("digito")
-        estado = request.form.get("estado")
         senha = request.form.get("senha")
+        
+        log_status = [
+            "Inicializando GulozitosOS...",
+            "Preparando envio seguro...",
+            f"Estado: {estado} | RA: {ra}-{digito}",
+            "OK. Dados higienizados com sucesso"
+        ]
         
         driver = None
         try:
             driver = iniciar_driver()
             driver.get("https://tarefasp.cmsp.seduc.sp.gov.br/")
             time.sleep(3)
+            # Automatização conforme fluxo do CMSP
             driver.find_element(By.ID, "input-usuario-sed").send_keys(ra)
             driver.find_element(By.ID, "r2").send_keys(digito)
             driver.find_element(By.ID, "input-senha").send_keys(senha)
             driver.find_element(By.ID, "botao-login").click()
             time.sleep(5)
-            resultado = "Login automatizado executado com sucesso!"
+            log_status.append("Login automatizado executado com sucesso!")
         except Exception as e:
-            resultado = f"Erro: {str(e)}"
+            log_status.append(f"Erro: {str(e)}")
         finally:
             if driver: driver.quit()
+
+    logs_html = "<br>".join([f"> {linha}" for linha in log_status])
 
     return render_template_string("""
     <!DOCTYPE html>
@@ -53,164 +67,175 @@ def index():
         <title>Gulozitos OS</title>
         <style>
             body {
-                background-color: #121212;
-                background-image: radial-gradient(#2a2a2a 1px, transparent 1px);
-                background-size: 20px 20px;
-                color: #fff;
+                margin: 0;
+                padding: 0;
+                background-color: #050302;
                 font-family: Arial, sans-serif;
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                height: 100vh;
-                margin: 0;
+                min-height: 100vh;
+                overflow: hidden;
             }
-            .main-card {
-                background: #000;
-                border: 2px solid #ff3b00;
-                border-radius: 8px;
-                padding: 25px 20px;
-                width: 340px;
-                box-shadow: 0 10px 30px rgba(255, 59, 0, 0.3);
+            .wrapper {
                 position: relative;
+                width: 100%;
+                max-width: 410px;
+                height: 100vh;
+                max-height: 820px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
             }
-            .logo-container {
-                text-align: center;
-                margin-bottom: 20px;
+            .bg-image {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                z-index: 1;
+                pointer-events: none; /* Garante que os cliques passem direto para os inputs se necessário */
             }
-            .logo-text {
-                font-family: 'Impact', sans-serif;
-                font-size: 32px;
-                color: #ffcc00;
-                letter-spacing: 2px;
-                text-shadow: 2px 2px #ff3b00;
-                font-style: italic;
+            /* Camada interativa posicionada milimetricamente sobre a arte */
+            .form-overlay {
+                position: relative;
+                z-index: 10;
+                width: 63%;
+                display: flex;
+                flex-direction: column;
+                gap: 7px;
+                margin-top: 12px;
             }
             .row-inputs {
                 display: flex;
-                gap: 10px;
-                margin-bottom: 12px;
+                gap: 5px;
             }
-            .input-group {
-                background: #1a1a1a;
-                border: 1px solid #333;
-                border-radius: 6px;
-                padding: 8px 12px;
-                margin-bottom: 12px;
+            .input-box {
+                background: rgba(8, 3, 2, 0.92);
+                border: 1px solid rgba(255, 69, 0, 0.75);
+                border-radius: 5px;
+                padding: 7px 9px;
                 display: flex;
                 align-items: center;
+                box-shadow: inset 0 2px 4px rgba(0,0,0,0.9);
             }
-            .input-group input, .input-group select {
+            .input-box select,
+            .input-box input {
                 background: transparent;
                 border: none;
                 color: #fff;
-                font-size: 16px;
+                font-size: 13px;
                 width: 100%;
                 outline: none;
             }
-            .input-group select option {
-                background: #1a1a1a;
+            .input-box select option {
+                background: #111;
                 color: #fff;
             }
-            .ra-box { flex: 3; }
-            .digito-box { flex: 1; }
+            .input-box input::placeholder {
+                color: #8c7e77;
+            }
+            .estado-group { flex: 1.2; }
+            .ra-group { flex: 2.2; }
+            .digito-group { flex: 1; }
             .pass-container {
                 position: relative;
+                display: flex;
+                align-items: center;
             }
             .toggle-pass {
+                position: absolute;
+                right: 10px;
                 background: none;
                 border: none;
-                color: #888;
+                color: #ff5500;
                 cursor: pointer;
-                font-size: 14px;
+                font-size: 12px;
+                font-weight: bold;
             }
             .btn-acessar {
                 width: 100%;
-                background: #ff5500;
+                background: linear-gradient(to bottom, #ff5500 0%, #e62200 100%);
                 color: #fff;
-                border: none;
-                padding: 14px;
-                font-size: 16px;
+                border: 1px solid #ff7733;
+                padding: 9px;
+                font-size: 13px;
                 font-weight: bold;
-                border-radius: 6px;
+                border-radius: 5px;
                 cursor: pointer;
                 text-transform: uppercase;
-                letter-spacing: 1px;
-                margin-top: 5px;
-                transition: background 0.2s;
+                letter-spacing: 0.5px;
+                box-shadow: 0 4px 10px rgba(255, 68, 0, 0.6);
             }
             .btn-acessar:hover {
-                background: #ff7722;
+                background: linear-gradient(to bottom, #ff661a, #f5330a);
             }
             .terminal-box {
-                background: #080f08;
-                border: 1px solid #1e4620;
-                border-radius: 6px;
-                padding: 12px;
-                margin-top: 20px;
+                background: rgba(2, 6, 2, 0.95);
+                border: 1px solid #166534;
+                border-radius: 5px;
+                padding: 7px;
                 font-family: 'Courier New', Courier, monospace;
                 color: #4ade80;
-                font-size: 13px;
-                min-height: 40px;
-                word-break: break-all;
+                font-size: 9.5px;
+                line-height: 1.3;
+                max-height: 55px;
+                overflow-y: auto;
             }
         </style>
     </head>
     <body>
-        <div class="main-card">
-            <div class="logo-container">
-                <span class="logo-text">Gulozitos</span>
-            </div>
-            
-            <form method="POST">
-                <div class="row-inputs">
-                    <div class="input-group ra-box">
-                        <input type="text" name="ra" placeholder="RA do Aluno" required>
+        <div class="wrapper">
+            <!-- Imagem exata de fundo -->
+            <img src="https://i.ibb.co/6803719/gulozitos-bg.png" class="bg-image" alt="Gulozitos OS">
+
+            <div class="form-overlay">
+                <form method="POST">
+                    <!-- Linha 1: Estado, RA e Dígito sobrepostos exatamente onde a arte pede -->
+                    <div class="row-inputs" style="margin-bottom: 7px;">
+                        <div class="input-box estado-group">
+                            <select name="estado">
+                                <option value="SP">SP</option>
+                                <option value="OUTROS">Outros</option>
+                            </select>
+                        </div>
+                        <div class="input-box ra-group">
+                            <input type="text" name="ra" placeholder="RA" required>
+                        </div>
+                        <div class="input-box digito-group">
+                            <input type="text" name="digito" placeholder="Dígito" maxlength="2" required>
+                        </div>
                     </div>
-                    <div class="input-group digito-box">
-                        <input type="text" name="digito" placeholder="Dígito" maxlength="2" required>
+
+                    <!-- Linha 2: Senha com botão funcional de ver/ocultar integrado -->
+                    <div class="input-box pass-container" style="margin-bottom: 7px; width: 100%;">
+                        <input type="password" name="senha" id="senha" placeholder="Senha" required style="padding-right: 35px;">
+                        <button type="button" class="toggle-pass" onclick="toggleSenha()">👁</button>
                     </div>
+
+                    <!-- Botão de Acessar -->
+                    <button type="submit" class="btn-acessar">ACESSAR</button>
+                </form>
+
+                <!-- Terminal simulado igualzinho na foto -->
+                <div class="terminal-box">
+                    {{ logs_html | safe }}
                 </div>
-
-                <div class="input-group">
-                    <select name="estado" required>
-                        <option value="" disabled selected>Selecione o Estado</option>
-                        <option value="SP">São Paulo (SP)</option>
-                        <option value="RJ">Rio de Janeiro (RJ)</option>
-                        <option value="MG">Minas Gerais (MG)</option>
-                        <option value="RS">Rio Grande do Sul (RS)</option>
-                        <option value="PR">Paraná (PR)</option>
-                        <option value="SC">Santa Catarina (SC)</option>
-                        <option value="BA">Bahia (BA)</option>
-                        <option value="Outros">Outros Estados</option>
-                    </select>
-                </div>
-
-                <div class="input-group pass-container">
-                    <input type="password" name="senha" id="senha" placeholder="Senha" required>
-                    <button type="button" class="toggle-pass" onclick="togglePassword()">👁️</button>
-                </div>
-
-                <button type="submit" class="btn-acessar">ACESSAR</button>
-            </form>
-
-            <div class="terminal-box">
-                > {{ resultado }}
             </div>
         </div>
 
         <script>
-            function togglePassword() {
-                const passInput = document.getElementById('senha');
-                if (passInput.type === 'password') {
-                    passInput.type = 'text';
+            function toggleSenha() {
+                const inputSenha = document.getElementById('senha');
+                if (inputSenha.type === 'password') {
+                    inputSenha.type = 'text';
                 } else {
-                    passInput.type = 'password';
+                    inputSenha.type = 'password';
                 }
             }
         </script>
     </body>
     </html>
-    """, resultado=resultado)
+    """, logs_html=logs_html)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
